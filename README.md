@@ -15,7 +15,7 @@ pip install ezdxf pdfplumber pymupdf openpyxl pandas
 python scripts/pipeline.py --input <图纸或目录> --db <价格库.xlsx> --out 报价单.xlsx
 ```
 
-扫描图纸需要额外配置 PaddleOCR；DWG 需先转换成 DXF。价格由使用者提供，未识别项目及推算结果须复核。仓库不包含第三方手册全文。
+扫描图纸需要额外配置 PaddleOCR；DWG 需先转换成 DXF。价格由使用者提供，未识别项目及推算结果须复核。手册全文及 OCR 可从 `knowledge/handbooks-and-ocr.zip` 下载并解压后使用；其版权及使用条件由各自权利人决定。
 
 ## 许可证
 
