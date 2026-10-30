@@ -1,0 +1,41 @@
+{
+  "_说明": "配套件规则。按设备数量自动配齐附件，与原表比对后只补差额，不重复计算。",
+  "options": {
+    "exclude_mcb_from_switch": false,
+    "_exclude_mcb_说明": "true 时「每个开关配1个指示灯」不把微型断路器算作开关（柜内微断数量多，按字面执行会配出大量指示灯）"
+  },
+  "rules": [
+    {
+      "id": "motor_protector",
+      "trigger": ["马达保护器", "马保"],
+      "add": [
+        {"name": "中间继电器", "model": "MY4NAC230V+底座", "unit": "只", "per": 4},
+        {"name": "熔断器", "model": "RT18-32X 6A（含熔芯）", "unit": "只", "per": 4}
+      ]
+    },
+    {
+      "id": "contactor",
+      "trigger": ["接触器"],
+      "add": [
+        {"name": "指示灯", "model": "CJK22-DP，AC220V", "unit": "只", "per": 2},
+        {"name": "辅助触点", "model": "三开两闭（3NO+2NC），配接触器", "unit": "只", "per": 1}
+      ]
+    },
+    {
+      "id": "switch",
+      "trigger": ["断路器", "隔离开关", "负荷开关"],
+      "add": [
+        {"name": "指示灯", "model": "CJK22-DP，AC220V", "unit": "只", "per": 1}
+      ]
+    },
+    {
+      "id": "vfd",
+      "trigger": ["变频器"],
+      "patch_model": "2路模拟量输入+2路模拟量输出（2AI+2AO）",
+      "add": [
+        {"name": "信号放大器", "model": "配变频器，2路模拟量输入(AI)+2路模拟量输出(AO)", "unit": "只", "per": 1},
+        {"name": "中间继电器", "model": "MY4NAC230V+底座", "unit": "只", "per": 4}
+      ]
+    }
+  ]
+}
