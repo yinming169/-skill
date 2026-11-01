@@ -2,5 +2,4 @@ __pycache__/
 *.pyc
 *.xlsx
 !assets/*.xlsx
-!references/*.xlsx
 work/
