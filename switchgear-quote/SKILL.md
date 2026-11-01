@@ -331,3 +331,10 @@ OCR 为可选项：`pip install paddlepaddle paddleocr`。没装时图片输入�
 - **元件代号当柜号**：`KA2`（继电器）、`SB1`（按钮）、`DI1`/`AI1`/`AO1`（PLC 点）、`L1`（相线）都是「字母+数字」，会被柜号正则误抓，一张图能切出十几个假柜。必须用 `_ELEM_CODE` 黑名单排除
 - **DXF 含非法代理字符**：部分 DXF 文字带未配对的 UTF-16 surrogates，`json.dump` 直接抛 `surrogates not allowed`，写 JSON 前必须 `encode('utf-8','ignore').decode()`
 - **图纸标注叠写**：`ACB-1600/3 CW3-1600/3` 是一行两个型号（通用代号 + 原设计型号），应拆开、规范化后自动合并，不能当粘连整串保留
+
+
+## 图纸识别复核与重点参考
+
+处理 CAD、PDF、扫描件及图片前，阅读 references/图片电气图识别复核.md。逐页检查覆盖、外部参照及 OCR 失败；设备表、原理图和位号需交叉复核，不得单凭图块数量或最近距离确定材料。证据和疑问单独记录；固定材料单样式和备注列不变。缺失信息不得编造。
+
+参考项目：references/Eng_Diagrams_研究参考.md、references/GElectrical_重点参考.md、references/freecad-panelwb/README.md。Elora Grid 电气符号索引及许可见 references/elora-symbols/README.md，可通过 python scripts/search_elora_symbols.py 断路器 检索；结果只作为候选参考。外部识别模型及 GElectrical、FreeCAD 未随本项目安装，不能宣称识别准确率已验证。

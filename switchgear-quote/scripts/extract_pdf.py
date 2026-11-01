@@ -4,6 +4,7 @@
 扫描件（无文字层）→ 标记 is_scanned，交给 extract_ocr 或人工。
 """
 import os
+import tempfile
 
 import fitz  # PyMuPDF
 
@@ -40,6 +41,22 @@ def extract_pdf(path, max_pages=None, want_tables=True):
         is_scanned = char_count < 20
         if is_scanned:
             scanned_pages.append(i + 1)
+            try:
+                from extract_ocr import extract_image
+                with tempfile.TemporaryDirectory() as tmp:
+                    image_path = os.path.join(tmp, "page.png")
+                    page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False).save(image_path)
+                    ocr = extract_image(image_path)
+                for row in ocr.get("rows", []):
+                    row["page"] = i + 1
+                    row["source"] = "ocr"
+                    row["x"] /= 2
+                    row["y"] /= 2
+                rows.extend(ocr.get("rows", []))
+                if not ocr.get("rows"):
+                    raise RuntimeError("OCR 未提取到文字，须人工核对")
+            except Exception as exc:
+                rows.append({"page": i + 1, "text": "", "x": 0, "y": 0, "ocr_error": str(exc)})
         pages.append({"page": i + 1, "is_scanned": is_scanned,
                       "char_count": char_count, "row_count": len(rows)})
         all_rows.extend(rows)
@@ -67,6 +84,9 @@ def extract_pdf(path, max_pages=None, want_tables=True):
         "tables": all_tables,
         "scanned_pages": scanned_pages,
         "inserts": [],
+        "error": ("扫描页 OCR 失败，不能视为完整识别: " + "; ".join(
+            f"第{r['page']}页: {r['ocr_error']}" for r in all_rows if r.get("ocr_error")))
+            if any(r.get("ocr_error") for r in all_rows) else "",
         "texts": [],
     }
 

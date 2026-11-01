@@ -25,11 +25,35 @@ def extract_dxf(path):
     doc = ezdxf.readfile(path)
     inserts, texts, tables = [], [], []
     block_count = {}
+    unsupported = []
+    visited = set()
+
+    def inspect_block(name):
+        if name in visited:
+            return
+        visited.add(name)
+        block = doc.blocks.get(name)
+        if block is None:
+            unsupported.append("缺失块定义: " + name)
+            return
+        flags = int(block.block.dxf.get("flags", 0))
+        if flags & (4 | 8):
+            unsupported.append("外部参照未解析: " + name)
+            return
+        for child in block:
+            t = child.dxftype()
+            if t == "INSERT":
+                inspect_block(child.dxf.name)
+            elif t in ("ACAD_TABLE", "PDFUNDERLAY", "DWFUNDERLAY", "DGNUNDERLAY", "ACAD_PROXY_ENTITY"):
+                unsupported.append("块内未解析对象: " + name + "/" + t)
 
     for layout_name, layout in _iter_layouts(doc):
         for e in layout:
             t = e.dxftype()
+            if t in ("ACAD_TABLE", "PDFUNDERLAY", "DWFUNDERLAY", "DGNUNDERLAY", "ACAD_PROXY_ENTITY"):
+                unsupported.append(layout_name + " 未解析对象: " + t)
             if t == "INSERT":
+                inspect_block(e.dxf.name)
                 name = e.dxf.name
                 block_count[name] = block_count.get(name, 0) + 1
                 attribs = {}
@@ -94,6 +118,8 @@ def extract_dxf(path):
         "block_count": block_count,
         "line_count": len(tables),
         "dxf_version": doc.dxfversion,
+        "coverage_issues": sorted(set(unsupported)),
+        "error": ("CAD 存在未解析对象，需人工检查: " + "; ".join(sorted(set(unsupported)))) if unsupported else "",
     }
 
 
@@ -101,10 +127,10 @@ def _group_rows(texts, tol=3.0):
     """把文字按坐标聚成行，输出 [{y, text}]。"""
     if not texts:
         return []
-    items = sorted(texts, key=lambda d: (-d["y"], d["x"]))
+    items = sorted(texts, key=lambda d: (d.get("layout", ""), -d["y"], d["x"]))
     rows, cur, cur_y = [], [], None
     for it in items:
-        if cur_y is None or abs(it["y"] - cur_y) <= tol:
+        if cur_y is None or (cur and it.get("layout") == cur[0].get("layout") and abs(it["y"] - cur_y) <= tol):
             cur.append(it)
             cur_y = it["y"] if cur_y is None else cur_y
         else:
@@ -116,7 +142,7 @@ def _group_rows(texts, tol=3.0):
     out = []
     for r in rows:
         r = sorted(r, key=lambda d: d["x"])
-        out.append({"y": r[0]["y"], "text": " ".join(x["text"] for x in r),
+        out.append({"layout": r[0].get("layout"), "y": r[0]["y"], "text": " ".join(x["text"] for x in r),
                     "parts": [x["text"] for x in r]})
     return out
 

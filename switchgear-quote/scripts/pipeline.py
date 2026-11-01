@@ -3,6 +3,7 @@
     python pipeline.py --input 图纸目录 --db 价格库.xlsx --out 报价单.xlsx
 """
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -38,6 +39,11 @@ def main():
 
     run("dispatch.py", [a.input, "--out", a.work])
     run("extract.py", [man, "--out", ext])
+    with open(ext, encoding="utf-8") as f:
+        extracted = json.load(f)
+    failures = [f for f in extracted.get("files", []) if f.get("error") or f.get("source_type") in ("skipped", "error", "image_no_ocr")]
+    if failures:
+        raise SystemExit("图纸提取不完整，已停止出表；请检查 extract.json: " + "; ".join(str(f.get("name", "")) + ": " + str(f.get("error", "未处理")) for f in failures))
     cls_args = [ext, "--out", itm]
     if a.cabinet_name:
         cls_args += ["--cabinet-name", a.cabinet_name]
