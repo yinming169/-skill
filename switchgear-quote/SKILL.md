@@ -338,3 +338,8 @@ OCR 为可选项：`pip install paddlepaddle paddleocr`。没装时图片输入�
 处理 CAD、PDF、扫描件及图片前，阅读 references/图片电气图识别复核.md。逐页检查覆盖、外部参照及 OCR 失败；设备表、原理图和位号需交叉复核，不得单凭图块数量或最近距离确定材料。证据和疑问单独记录；固定材料单样式和备注列不变。缺失信息不得编造。
 
 参考项目：references/Eng_Diagrams_研究参考.md、references/GElectrical_重点参考.md、references/freecad-panelwb/README.md。Elora Grid 电气符号索引及许可见 references/elora-symbols/README.md，可通过 python scripts/search_elora_symbols.py 断路器 检索；结果只作为候选参考。外部识别模型及 GElectrical、FreeCAD 未随本项目安装，不能宣称识别准确率已验证。
+
+
+## 统一入口
+
+使用 `python scripts/unified.py --status` 检查依赖，使用 `--input` 检查图纸分流；提供 `--db` 和 `--out` 可调用现有报价流程。具体说明见 `references/统一入口.md`。FreeCAD 和 GElectrical 当前仅检测可用性，自动调用接口尚未实现，外部识别模型尚未配置。
