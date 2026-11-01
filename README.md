@@ -20,6 +20,10 @@
 ├── knowledge/                     知识库（完整）
 │   ├── handbooks-and-ocr.zip      46 MB，958 文件（五本书全文 + OCR + 页面图）
 │   └── README.md
+├── samples/                       示例图纸（dwg + dxf，4 个文件 30 MB）
+│   ├── jinguan.dwg / .dxf         低压配电工程图纸
+│   ├── yalv.dwg / .dxf            压滤机房低压配电图纸
+│   └── README.md
 └── README.md
 ```
 
@@ -71,9 +75,10 @@ python scripts/pipeline.py --input <图纸或目录> --db <价格库.xlsx> --out
 
 | 内容 | 原因 |
 |---|---|
-| 客户图纸（`.dwg` / `.dxf`） | **商业机密**，绝不能公开 |
 | LibreDWG 二进制（93 MB） | 第三方 GPL 工具，官方 releases 可下载 |
 | Python wheels（253 MB） | PyPI 公开可下载，`pip install` 即可 |
+
+示例图纸已放入 `samples/`（dwg + 已转换的 dxf），**DXF 可直接解析，无需安装 LibreDWG**。
 
 ## 让 AI 使用
 
