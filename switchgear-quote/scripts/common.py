@@ -57,12 +57,25 @@ def read_json(path):
         return json.load(f)
 
 
+def _sanitize(obj):
+    """清掉 DXF 里常见的非法 UTF-16 代理字符，否则 json.dump 会抛 surrogates not allowed。"""
+    if isinstance(obj, str):
+        return obj.encode("utf-8", "ignore").decode("utf-8")
+    if isinstance(obj, list):
+        return [_sanitize(x) for x in obj]
+    if isinstance(obj, tuple):
+        return tuple(_sanitize(x) for x in obj)
+    if isinstance(obj, dict):
+        return {_sanitize(k): _sanitize(v) for k, v in obj.items()}
+    return obj
+
+
 def write_json(path, data):
     d = os.path.dirname(os.path.abspath(path))
     if d:
         os.makedirs(d, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+        json.dump(_sanitize(data), f, ensure_ascii=False, indent=2)
     return path
 
 
@@ -131,14 +144,14 @@ def parse_cabinet_size(lines):
 COPPER_TABLE = [
     (250, "TMY-30×4", 120),
     (400, "TMY-40×5", 200),
-    (630, "TMY-50×6", 300),
-    (800, "TMY-60×8", 480),
-    (1000, "TMY-80×10", 800),
-    (1250, "TMY-100×10", 1000),
-    (1600, "TMY-120×10", 1200),
-    (2000, "TMY-2×(100×10)", 2000),
-    (2500, "TMY-2×(120×10)", 2400),
-    (3200, "TMY-3×(100×10)", 3000),
+    (630, "TMY-50×5", 250),        # 500-630A
+    (800, "TMY-50×6", 300),        # 630-800A
+    (1000, "TMY-50×10", 500),      # 1000A
+    (1250, "TMY-80×8", 640),       # 1250A
+    (1600, "TMY-80×10", 800),      # 1600A
+    (2000, "TMY-100×10", 1000),    # 2000A
+    (2500, "TMY-125×10", 1250),    # 2500A
+    (3200, "TMY-2×(125×10)", 2500),  # 双拼，载流量×1.5
 ]
 
 COPPER_DENSITY = 8.9  # g/cm³

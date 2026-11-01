@@ -25,6 +25,9 @@ def main():
     ap.add_argument("--out", default="报价单.xlsx")
     ap.add_argument("--work", default="work")
     ap.add_argument("--cabinet-name", default="")
+    ap.add_argument("--format", choices=["standard", "detail"], default="standard",
+                    help="standard=每柜一张标准分项报价表（默认）；detail=内部 7 表工作簿")
+    ap.add_argument("--split-files", action="store_true", help="每柜输出独立 xlsx 文件")
     a = ap.parse_args()
 
     os.makedirs(a.work, exist_ok=True)
@@ -40,7 +43,10 @@ def main():
         cls_args += ["--cabinet-name", a.cabinet_name]
     run("classify.py", cls_args)
     run("price_match.py", [itm, "--db", a.db, "--out", prc])
-    run("build_quote.py", [prc, "--out", a.out])
+    bq = [prc, "--out", a.out, "--format", a.format]
+    if a.split_files:
+        bq.append("--split-files")
+    run("build_quote.py", bq)
 
     print(f"\n完成：{os.path.abspath(a.out)}")
 

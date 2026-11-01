@@ -49,9 +49,9 @@ def _cell(ws, r, c, v, fmt=None, align="center", fill=None, bold=False):
 
 def sheet_items(wb, rows, title="元器件清单", group_by_cabinet=True):
     ws = wb.create_sheet(title)
-    cols = ["序号", "柜号", "类别", "名称", "规格型号", "品牌", "单位", "数量",
+    cols = ["序号", "柜号", "类别", "名称", "规格型号", "极限分断", "品牌", "单位", "数量",
             "单价(成本)", "加价率", "售价", "小计", "匹配", "供应商", "图纸依据/备注"]
-    widths = [5, 9, 9, 16, 22, 11, 5, 7, 11, 8, 11, 12, 8, 14, 40]
+    widths = [5, 9, 9, 16, 22, 10, 11, 5, 7, 11, 8, 11, 12, 8, 14, 40]
     _hdr(ws, 1, cols, widths)
 
     r = 2
@@ -77,33 +77,34 @@ def sheet_items(wb, rows, title="元器件清单", group_by_cabinet=True):
         _cell(ws, r, 3, it.get("category", ""), fill=fill)
         _cell(ws, r, 4, it.get("name", ""), align="left", fill=fill)
         _cell(ws, r, 5, it.get("model", ""), align="left", fill=fill)
-        _cell(ws, r, 6, it.get("brand", ""), fill=fill)
-        _cell(ws, r, 7, it.get("unit", ""), fill=fill)
-        _cell(ws, r, 8, it.get("qty", 0), fill=fill)
-        _cell(ws, r, 9, it.get("cost") if has_price else None, fmt=MONEY, fill=fill)
-        _cell(ws, r, 10, it.get("markup", 0), fmt=PCT, fill=fill)
+        _cell(ws, r, 6, it.get("breaking_capacity", ""), fill=fill)
+        _cell(ws, r, 7, it.get("brand", ""), fill=fill)
+        _cell(ws, r, 8, it.get("unit", ""), fill=fill)
+        _cell(ws, r, 9, it.get("qty", 0), fill=fill)
+        _cell(ws, r, 10, it.get("cost") if has_price else None, fmt=MONEY, fill=fill)
+        _cell(ws, r, 11, it.get("markup", 0), fmt=PCT, fill=fill)
         if has_price:
-            _cell(ws, r, 11, f"=I{r}*(1+J{r})", fmt=MONEY, fill=fill)
-            _cell(ws, r, 12, f"=H{r}*K{r}", fmt=MONEY, fill=fill)
+            _cell(ws, r, 12, f"=J{r}*(1+K{r})", fmt=MONEY, fill=fill)
+            _cell(ws, r, 13, f"=I{r}*L{r}", fmt=MONEY, fill=fill)
         else:
-            _cell(ws, r, 11, None, fmt=MONEY, fill=fill)
             _cell(ws, r, 12, None, fmt=MONEY, fill=fill)
-        _cell(ws, r, 13, it.get("match", ""), fill=fill)
-        _cell(ws, r, 14, it.get("supplier", ""), fill=fill)
-        _cell(ws, r, 15, (it.get("evidence") or it.get("basis") or "")[:200], align="left", fill=fill)
+            _cell(ws, r, 13, None, fmt=MONEY, fill=fill)
+        _cell(ws, r, 14, it.get("match", ""), fill=fill)
+        _cell(ws, r, 15, it.get("supplier", ""), fill=fill)
+        _cell(ws, r, 16, (it.get("evidence") or it.get("basis") or "")[:200], align="left", fill=fill)
         total_cost_row.append(r)
         r += 1
         seq += 1
 
     if total_cost_row:
         _cell(ws, r, 1, "合计", bold=True, fill=GREY)
-        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=7)
-        _cell(ws, r, 8, f"=SUM(H{total_cost_row[0]}:H{total_cost_row[-1]})", bold=True, fill=GREY)
-        _cell(ws, r, 9, None, fill=GREY)
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=8)
+        _cell(ws, r, 9, f"=SUM(I{total_cost_row[0]}:I{total_cost_row[-1]})", bold=True, fill=GREY)
         _cell(ws, r, 10, None, fill=GREY)
         _cell(ws, r, 11, None, fill=GREY)
-        _cell(ws, r, 12, f"=SUM(L{total_cost_row[0]}:L{total_cost_row[-1]})", fmt=MONEY, bold=True, fill=GREY)
-        ws.merge_cells(start_row=r, start_column=13, end_row=r, end_column=15)
+        _cell(ws, r, 12, None, fill=GREY)
+        _cell(ws, r, 13, f"=SUM(M{total_cost_row[0]}:M{total_cost_row[-1]})", fmt=MONEY, bold=True, fill=GREY)
+        ws.merge_cells(start_row=r, start_column=14, end_row=r, end_column=16)
         ws.freeze_panes = "A2"
         ws.auto_filter.ref = f"A1:{get_column_letter(len(cols))}{r-1}"
         return ws, r - 1  # 返回最后一条数据行，供汇总 SUM 使用（不能含合计行）
@@ -159,8 +160,8 @@ def sheet_summary(wb, items_end, parts_end, copper_end, project):
     ws.merge_cells("A1:E1")
 
     rows = [
-        ("一", "元器件清单", f"=SUM('元器件清单'!L2:L{items_end})"),
-        ("二", "柜体部件清单", f"=SUM('柜体部件'!L2:L{parts_end})"),
+        ("一", "元器件清单", f"=SUM('元器件清单'!M2:M{items_end})"),
+        ("二", "柜体部件清单", f"=SUM('柜体部件'!M2:M{parts_end})"),
         ("三", "铜排清单", f"=SUM('铜排清单'!J2:J{copper_end})"),
     ]
     r = 3
@@ -324,14 +325,212 @@ def build(priced, out):
     return out
 
 
+# ---------------- 用户标准格式：单 sheet「分项报价表」 ----------------
+# 依据 assets/标准参考格式.xlsx 复刻：
+#   第1行 A1:F1 合并「分项报价表」黑体14加粗居中
+#   第2行 A2:F2 合并「项目名称：」宋体12加粗左对齐
+#   第3行 表头 序号 | 名 称（元器件） | 型 号 规 格 | 单位 | 数量 | 备注
+#   第4行起 设备名称分组（A:C 合并）+ 明细
+#   末段 材料小计 / 制造费 / 利润 / 税费 / 产品报价
+STD_TITLE_FONT = Font(name="黑体", size=14, bold=True)
+STD_PROJ_FONT = Font(name="宋体", size=12, bold=True)
+STD_HDR_FONT = Font(name="宋体", size=11)
+STD_BODY_FONT = Font(name="宋体", size=11)
+STD_WHITE = PatternFill("solid", fgColor="FFFFFF")
+STD_WIDTHS = [6, 18, 31, 6, 6, 13, 11]   # 参考格式 6 列 + 金额列 G
+STD_ROW_H = 25                        # 参考 33.33px ≈ 25pt
+
+
+def _sheet_name(name):
+    """Excel sheet 名：去非法字符，限 31 字符。"""
+    s = str(name or "未命名")
+    for ch in '/\\?*[]:':
+        s = s.replace(ch, "-")
+    return (s.strip() or "未命名")[:31]
+
+
+def _draw_std_sheet(ws, project, cab_label, items, cab_rows, aux_rows, copper_rows):
+    """在 ws 上画一张完整的分项报价表（参考格式 1:1）。"""
+    for i, w in enumerate(STD_WIDTHS, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    def cell(r, c, v=None, align="center", font=None, fill=None, fmt=None):
+        x = ws.cell(row=r, column=c, value=v)
+        x.font = font or STD_BODY_FONT
+        x.alignment = Alignment(horizontal=align, vertical="center", wrap_text=True)
+        x.border = BORDER
+        if fill:
+            x.fill = fill
+        if fmt:
+            x.number_format = fmt
+        return x
+
+    def merged(r, text, font, align):
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=7)
+        cell(r, 1, text, align=align, font=font)
+        for c in range(2, 8):
+            cell(r, c, None)
+        ws.row_dimensions[r].height = STD_ROW_H
+
+    merged(1, "分项报价表", STD_TITLE_FONT, "center")
+    merged(2, f"项目名称：{project}　　{cab_label}", STD_PROJ_FONT, "left")
+
+    headers = ["序号", "名 称（元器件）", "型 号 规 格", "单位", "数量", "备注", "金额"]
+    for i, h in enumerate(headers, start=1):
+        cell(3, i, h, font=STD_HDR_FONT, fill=STD_WHITE)
+    ws.row_dimensions[3].height = STD_ROW_H
+
+    state = {"r": 4, "seq": 1}
+
+    def group(title, unit_default):
+        r = state["r"]
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=3)
+        cell(r, 1, title, align="left")
+        for c in range(2, 7):
+            cell(r, c, None)
+        cell(r, 4, unit_default)
+        ws.row_dimensions[r].height = STD_ROW_H
+        state["r"] = r + 1
+
+    def row(it):
+        r, seq = state["r"], state["seq"]
+        cell(r, 1, seq)
+        cell(r, 2, it.get("name", ""), align="left")
+        model = it.get("model") or it.get("spec") or ""
+        icu = it.get("breaking_capacity", "")
+        # 型号里已含 Icu（塑壳规则写法）时不重复追加
+        full = str(model) if "ICU" in str(model).upper() else f"{model} {icu}".strip()
+        cell(r, 3, full, align="left")
+        cell(r, 4, it.get("unit", ""))
+        cell(r, 5, it.get("qty", 0))
+        amt = it.get("amount")
+        cell(r, 6, None, align="left")   # 备注列一律不写任何文字（用户规则：仅作辅助标记）
+        cell(r, 7, amt if amt is not None else None, align="right", fmt=MONEY)
+        # 长型号描述（塑壳/变频器/马保/软启动/仪表）自动加高行，避免显示不全
+        h = STD_ROW_H
+        if len(full) > 60:
+            h = min(140, STD_ROW_H + (len(full) // 30) * 12)
+        ws.row_dimensions[r].height = h
+        state["r"], state["seq"] = r + 1, seq + 1
+
+    # 用户要求：柜体/辅材/铜排不再单列分组，全部并入「元器件」一项，序号连续
+    all_rows = list(items) + list(cab_rows) + list(aux_rows) + list(copper_rows)
+    if all_rows:
+        group("元器件", "台")
+        for it in all_rows:
+            row(it)
+
+    # 本柜独立汇总：材料小计（成本）→ 制造费 → 利润（加价部分）→ 税费 → 产品报价
+    material = sum((x.get("cost_amount") or 0) for x in all_rows)
+    profit = sum(((x.get("amount") or 0) - (x.get("cost_amount") or 0)) for x in all_rows)
+    tax = round((material + profit) * 0.13, 2)
+    total = round(material + profit + tax, 2)
+
+    for label, val in [("材料小计", material), ("制造费", None), ("利润", profit),
+                       ("税费", tax), ("产品报价", total)]:
+        r, seq = state["r"], state["seq"]
+        cell(r, 1, seq)
+        cell(r, 2, label, align="left", font=STD_HDR_FONT)
+        cell(r, 3, None)
+        cell(r, 4, "台")
+        cell(r, 5, None)
+        cell(r, 6, None)
+        cell(r, 7, val if val is not None else None, align="right", fmt=MONEY)
+        ws.row_dimensions[r].height = STD_ROW_H
+        state["r"], state["seq"] = r + 1, seq + 1
+
+    ws.freeze_panes = "A4"
+
+
+def build_standard(priced, out, split_files=False):
+    """每台柜/箱单独一张完整分项报价表，各自独立核算材料、利润、税费、总价。
+
+    split_files=False：一个工作簿，每柜一个 sheet（默认，便于一次交付）
+    split_files=True ：每柜一个独立 xlsx 文件（便于单柜发给客户）
+    """
+    items = priced.get("items", [])
+    parts = priced.get("cabinet_parts", [])
+    copper = priced.get("copper", [])
+    project = priced.get("project", {}).get("name", "") or ""
+
+    groups, order = {}, []
+    for it in items:
+        cab = it.get("cabinet", "全部") or "全部"
+        if cab not in groups:
+            groups[cab] = []
+            order.append(cab)
+        groups[cab].append(it)
+    if not order:
+        order, groups = ["全部"], {"全部": []}
+
+    n = len(order)
+
+    def _share(src_rows):
+        """柜体部件/铜排按柜数均摊：数量、长度、重量、金额同步分摊。"""
+        out_rows = []
+        for p in src_rows:
+            q = dict(p)
+            for k in ("qty", "amount", "cost_amount", "length_m", "weight_kg"):
+                if q.get(k) is not None:
+                    q[k] = round(q[k] / n, 2)
+            q["basis"] = (p.get("basis") or "") + f"（{n} 柜均摊）"
+            out_rows.append(q)
+        return out_rows
+
+    part_share = _share(parts)
+    copper_share = _share(copper)
+    # 柜体作为整体一行；其余（母线框/绝缘子/照明/加热/温控/风机等）归辅材
+    cab_share = [p for p in part_share if p.get("category") == "柜体"]
+    aux_share = [p for p in part_share if p.get("category") != "柜体"]
+
+    def label_of(cab):
+        return "未归柜（需人工分配）" if cab == "全部" else cab
+
+    if split_files:
+        import os
+        base, ext = os.path.splitext(out)
+        paths = []
+        for cab in order:
+            wb = Workbook()
+            wb.remove(wb.active)
+            safe = _sheet_name("未归柜" if cab == "全部" else cab)
+            ws = wb.create_sheet(safe)
+            _draw_std_sheet(ws, project, label_of(cab), groups[cab], cab_share, aux_share, copper_share)
+            p = f"{base}_{safe}{ext}"
+            wb.save(p)
+            paths.append(p)
+        return paths
+
+    wb = Workbook()
+    wb.remove(wb.active)
+    for cab in order:
+        ws = wb.create_sheet(_sheet_name("未归柜" if cab == "全部" else cab))
+        _draw_std_sheet(ws, project, label_of(cab), groups[cab], cab_share, aux_share, copper_share)
+    wb.save(out)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("priced", help="priced.json")
     ap.add_argument("--out", default="报价单.xlsx")
+    ap.add_argument("--format", choices=["standard", "detail"], default="standard",
+                    help="standard=每柜一张标准分项报价表；detail=内部 7 表工作簿")
+    ap.add_argument("--split-files", action="store_true",
+                    help="每柜输出独立 xlsx 文件（默认每柜一个 sheet）")
     a = ap.parse_args()
     data = read_json(a.priced)
-    path = build(data, a.out)
-    print(f"报价单 -> {path}")
+    if a.format == "standard":
+        result = build_standard(data, a.out, split_files=a.split_files)
+        if isinstance(result, list):
+            print(f"分项报价表（每柜独立文件，共 {len(result)} 份）->")
+            for p in result:
+                print(f"  {p}")
+        else:
+            print(f"分项报价表（每柜一个 sheet）-> {result}")
+    else:
+        path = build(data, a.out)
+        print(f"报价单（7 表明细）-> {path}")
     print(f"  元器件 {len(data.get('items', []))} 项 / 柜体部件 {len(data.get('cabinet_parts', []))} 项 / "
           f"铜排 {len(data.get('copper', []))} 项 / 未匹配 {len(data.get('unmatched', []))} 项")
 
