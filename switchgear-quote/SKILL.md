@@ -343,3 +343,8 @@ OCR 为可选项：`pip install paddlepaddle paddleocr`。没装时图片输入�
 ## 统一入口
 
 使用 `python scripts/unified.py --status` 检查依赖，使用 `--input` 检查图纸分流；提供 `--db` 和 `--out` 可调用现有报价流程。具体说明见 `references/统一入口.md`。FreeCAD 和 GElectrical 当前仅检测可用性，自动调用接口尚未实现，外部识别模型尚未配置。
+
+
+## 六份资料检索与已知复核边界
+
+使用 `python scripts/search_switchgear_book.py <关键词>` 检索资料3全文 OCR，或在仓库根目录使用 `python knowledge/tools/search.py <关键词> --book 资料1` 至 `资料6`。仓库根目录 knowledge/cards 中存放原图复核卡片，card-01、03、06、07 有复核警示，先读 card-09、10、11 等纠错记录。知识索引和 OCR 均为检索线索，不代表全文或全页经过人工核对；数字、公式、表格及标准的现行性必须核对来源，缺乏原 PDF 时请求用户提供。本地原书在备份的 source_books 目录；本仓库不包含原版 PDF。电机资料5目前仅 OCR 前30页。材料单模板和备注列固定不变。
